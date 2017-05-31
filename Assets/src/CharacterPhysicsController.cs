@@ -44,21 +44,37 @@ public class CharacterPhysicsController : MonoBehaviour {
 
         // process cols
         if(cols.isCollisionAtDirection(cols.down, Vector2.down) && getVelocityY() <= 0f) {
+            // ground
             collisionState = CollisionStates.GROUND;
             setVelocityY(0f);
 
             float collisionPointY = cols.getRaycastHit(cols.down).point.y;
             float playerHeight = boxCollider.bounds.max.y - boxCollider.bounds.min.y;
-            transform.position = new Vector2(transform.position.x, collisionPointY + playerHeight / 2f);
+            transform.position = new Vector2(transform.position.x, collisionPointY + (playerHeight / 2f));
         } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
-            // on wall left (maybe combine with below)
+            // left wall
+            collisionState = CollisionStates.WALL;
+            setVelocityX(0f);
+
+            float collisionPointX = cols.getRaycastHit(cols.left).point.x;
+            float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
+            transform.position = new Vector2(collisionPointX + (playerWidth / 2f), transform.position.y);
         } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
-            // on wall right (maybe combine with above
+            // right wall
+            collisionState = CollisionStates.WALL;
+            setVelocityX(0f);
+
+            float collisionPointX = cols.getRaycastHit(cols.right).point.x;
+            float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
+            transform.position = new Vector2(collisionPointX - (playerWidth / 2f), transform.position.y);
         } else {
-            // in air
+            collisionState = CollisionStates.AIR;
         }
 
         // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
+        if(cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
+            setVelocityY(0f);
+        }
     }
 
     /// <summary>
