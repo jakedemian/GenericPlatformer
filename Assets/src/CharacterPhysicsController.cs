@@ -11,11 +11,13 @@ public class CharacterPhysicsController : MonoBehaviour {
     private int collisionState = CollisionStates.AIR;
     private int collisionLayer = 1 << 8;
 
-    private const float GRAVITY_ACCELERATION = -9.8f;
-    private const float WALL_SLIDE_ACCELERATION = -5f;
+    private const float GRAVITY_ACCELERATION = -12f;
+    private const float WALL_SLIDE_ACCELERATION_DOWN = -3f;
+    private const float WALL_SLIDE_DECELERATION_UP = -15f;
     private const int RAYCASTS_PER_DIRECTION = 5;
-    private const float RAYCAST_LENGTH = 0.3f;
+    private const float RAYCAST_LENGTH = 0.4f;
     private const float MAX_FALL_SPEED = -10f;
+    private const float MAX_SLIDE_SPEED = -3f;
     private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
     private const float MAX_HORIZONTAL_SPEED_AIR = 15f;
 
@@ -39,13 +41,20 @@ public class CharacterPhysicsController : MonoBehaviour {
             float newY = getVelocityY() + (GRAVITY_ACCELERATION * Time.deltaTime);
             setVelocityY(newY);
         } else if(collisionState == CollisionStates.WALL) {
-            float newY = getVelocityY() + (WALL_SLIDE_ACCELERATION * Time.deltaTime);
+            float newY;
+            if(getVelocityY() <= 0) {
+                newY = getVelocityY() + (WALL_SLIDE_ACCELERATION_DOWN * Time.deltaTime);
+            } else {
+                newY = getVelocityY() + (WALL_SLIDE_DECELERATION_UP * Time.deltaTime);
+            }
             setVelocityY(newY);
         }
 
         // limit the player's fall speed
-        if(getVelocityY() < MAX_FALL_SPEED) {
+        if(collisionState == CollisionStates.AIR && getVelocityY() < MAX_FALL_SPEED) {
             setVelocityY(MAX_FALL_SPEED);
+        } else if(collisionState == CollisionStates.WALL && getVelocityY() < MAX_SLIDE_SPEED) {
+            setVelocityY(MAX_SLIDE_SPEED);
         }
 
         // limit the player's movement speed
@@ -74,24 +83,55 @@ public class CharacterPhysicsController : MonoBehaviour {
             transform.position = new Vector2(transform.position.x, collisionPointY + (playerHeight / 2f));
 
             // still need to provide wall snapping, just don't set the state to WALL since we're already grounded
-            if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
+            if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() < 0f) {
                 snapToLeftWall();
-            } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
+            } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() > 0f) {
                 snapToRightWall();
             }
-        } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
+        } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() < 0f) {
             collisionState = CollisionStates.WALL;
             snapToLeftWall();
-        } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
+        } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() > 0f) {
             collisionState = CollisionStates.WALL;
             snapToRightWall();
         } else {
             collisionState = CollisionStates.AIR;
+
+            // we need to handle a case in which a character is falling and they hit a block corner to corner
+            if(getVelocityX() != 0 && getVelocityY() != 0) {
+                // we are moving diagonally
+                float xDir = getVelocityX() < 0 ? -1f : 1f;
+                float yDir = getVelocityY() < 0 ? -1f : 1f;
+                Vector2 dir = new Vector2(xDir, yDir);
+
+                Vector2 diagRaycastOrigin = new Vector2(transform.position.x + (dir.x / 2f), transform.position.y + (dir.y / 2f));
+                generateDiagonalRaycast(diagRaycastOrigin, dir);
+            }
         }
 
         // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
         if(cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
-            setVelocityY(0f);
+            setVelocityY(-0.5f * getVelocityY());
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <param name="dir"></param>
+    private void generateDiagonalRaycast(Vector2 origin, Vector2 dir) {
+        RaycastHit2D[] hHitsToCheck = dir.x < 0f ? cols.left : cols.right;
+        RaycastHit2D[] vHitsToCheck = dir.y < 0f ? cols.down : cols.up;
+
+        Vector2 hDirToCheck = dir.x < 0f ? Vector2.left : Vector2.right;
+        Vector2 vDirToCheck = dir.y < 0f ? Vector2.down : Vector2.up;
+
+        RaycastHit2D diagHit = Physics2D.Raycast(origin, dir, Mathf.Sqrt(2f) * (RAYCAST_LENGTH / 2f), collisionLayer);
+        Debug.DrawRay(origin, dir * Mathf.Sqrt(2f) * (RAYCAST_LENGTH / 2f), Color.yellow);
+        if(diagHit && !cols.isCollisionAtDirection(hHitsToCheck, hDirToCheck) && !cols.isCollisionAtDirection(vHitsToCheck, vDirToCheck)){
+            // if we made it here, then the diagonal has detected a collision before any of the other raycasts.
+            setVelocityX(0f);
         }
     }
 
@@ -185,12 +225,5 @@ public class CharacterPhysicsController : MonoBehaviour {
 
     public int getPlayerCollisionState() {
         return collisionState;
-    }
-
-    // TODO move out so that all classes have access??
-    public struct CollisionStates {
-        public static int GROUND = 0;
-        public static int WALL = 1;
-        public static int AIR = 2;
     }
 }
