@@ -1,12 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericPlatformer", "GenericPlatformer.csproj", "{4CB9AEF8-0E7C-A47F-73F2-F1825DB28ACA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CB9AEF8-0E7C-A47F-73F2-F1825DB28ACA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CB9AEF8-0E7C-A47F-73F2-F1825DB28ACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CB9AEF8-0E7C-A47F-73F2-F1825DB28ACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CB9AEF8-0E7C-A47F-73F2-F1825DB28ACA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
