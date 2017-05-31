@@ -5,9 +5,11 @@ using UnityEngine;
 public class CharacterPhysicsController : MonoBehaviour {
     public bool showDebugRaycasts = true;
 
+    [HideInInspector]
+    public CollisionData cols;
+
     private Rigidbody2D rb;
     private BoxCollider2D boxCollider;
-    private CollisionData cols;
     private int collisionState = CollisionStates.AIR;
     private int collisionLayer = 1 << 8;
 
@@ -15,7 +17,7 @@ public class CharacterPhysicsController : MonoBehaviour {
     private const float WALL_SLIDE_ACCELERATION_DOWN = -3f;
     private const float WALL_SLIDE_DECELERATION_UP = -15f;
     private const int RAYCASTS_PER_DIRECTION = 5;
-    private const float RAYCAST_LENGTH = 0.4f;
+    private const float MIN_RAYCAST_LENGTH = 0.2f;
     private const float MAX_FALL_SPEED = -10f;
     private const float MAX_SLIDE_SPEED = -3f;
     private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
@@ -116,10 +118,10 @@ public class CharacterPhysicsController : MonoBehaviour {
     }
 
     /// <summary>
-    /// 
+    ///     Generate a diagonal raycast if the player is moving diagonally.
     /// </summary>
-    /// <param name="origin"></param>
-    /// <param name="dir"></param>
+    /// <param name="origin">The origin of the raycast.</param>
+    /// <param name="dir"> The direction of the raycast.</param>
     private void generateDiagonalRaycast(Vector2 origin, Vector2 dir) {
         RaycastHit2D[] hHitsToCheck = dir.x < 0f ? cols.left : cols.right;
         RaycastHit2D[] vHitsToCheck = dir.y < 0f ? cols.down : cols.up;
@@ -127,8 +129,12 @@ public class CharacterPhysicsController : MonoBehaviour {
         Vector2 hDirToCheck = dir.x < 0f ? Vector2.left : Vector2.right;
         Vector2 vDirToCheck = dir.y < 0f ? Vector2.down : Vector2.up;
 
-        RaycastHit2D diagHit = Physics2D.Raycast(origin, dir, Mathf.Sqrt(2f) * (RAYCAST_LENGTH / 2f), collisionLayer);
-        Debug.DrawRay(origin, dir * Mathf.Sqrt(2f) * (RAYCAST_LENGTH / 2f), Color.yellow);
+        float magSpeed = Mathf.Sqrt(Mathf.Pow(getVelocityX(), 2) + Mathf.Pow(getVelocityY(), 2));
+        float raycastLengthFactor = magSpeed / 10f;
+        float raycastLen = MIN_RAYCAST_LENGTH / 2f;
+
+        RaycastHit2D diagHit = Physics2D.Raycast(origin, dir, Mathf.Sqrt(2f) * (raycastLen + (raycastLen * raycastLengthFactor)), collisionLayer);
+        Debug.DrawRay(origin, dir * Mathf.Sqrt(2f) * (raycastLen + (raycastLen * raycastLengthFactor)), Color.yellow);
         if(diagHit && !cols.isCollisionAtDirection(hHitsToCheck, hDirToCheck) && !cols.isCollisionAtDirection(vHitsToCheck, vDirToCheck)){
             // if we made it here, then the diagonal has detected a collision before any of the other raycasts.
             setVelocityX(0f);
@@ -184,15 +190,16 @@ public class CharacterPhysicsController : MonoBehaviour {
     /// <returns>An array of the RaycastHit2D objects.</returns>
     private RaycastHit2D[] generateRaycastsForDirection(Vector2 origin1, Vector2 origin2, Vector2 dir) {
         RaycastHit2D[] res = new RaycastHit2D[RAYCASTS_PER_DIRECTION];
-
         Vector2 raycastOffset = (origin2 - origin1) / (RAYCASTS_PER_DIRECTION - 1);
+        float magSpeed = Mathf.Sqrt(Mathf.Pow(getVelocityX(),2) + Mathf.Pow(getVelocityY(),2));
+        float raycastLengthFactor = magSpeed / 10f;
         
         for(int i = 0; i < RAYCASTS_PER_DIRECTION; i++) {
             Vector2 origin = origin1 + (i * raycastOffset);
-            res[i] = Physics2D.Raycast(origin, dir, RAYCAST_LENGTH, collisionLayer);
+            res[i] = Physics2D.Raycast(origin, dir, MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor), collisionLayer);
 
             if(showDebugRaycasts) {
-                Debug.DrawRay(origin, dir * RAYCAST_LENGTH, Color.green);
+                Debug.DrawRay(origin, dir * (MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor)), Color.green);
             }
         }
 
