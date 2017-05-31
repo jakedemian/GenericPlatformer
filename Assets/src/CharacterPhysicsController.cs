@@ -171,7 +171,12 @@ public class CharacterPhysicsController : MonoBehaviour {
             res[i] = Physics2D.Raycast(origin, dir, MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor), collisionLayer);
 
             if(showDebugRaycasts) {
-                Color raycastClr = res[i] && cols.isCollision(res[i], dir) ? Color.green : Color.black;
+                Color raycastClr = Color.black;
+                if(res[i]) {
+                    if(cols.isCollision(res[i], dir)) {
+                        raycastClr = Color.green;
+                    }
+                }
                 Debug.DrawRay(origin, dir * (MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor)), raycastClr);
             }
         }

@@ -48,13 +48,13 @@ public class ColliderController : MonoBehaviour {
         // TODO need to come up with special logic for the corners
         // down should always get priority, then left/right, then up
 
-        if(collisionPoint.x == leftBorderX) {
+        if(Mathf.Approximately(collisionPoint.x, leftBorderX)) {
             res = Vector2.left;
-        } else if(collisionPoint.x == rightBorderX) {
+        } else if(Mathf.Approximately(collisionPoint.x, rightBorderX)) {
             res = Vector2.right;
-        } else if(collisionPoint.y == topBorderY) {
+        } else if(Mathf.Approximately(collisionPoint.y, topBorderY)) {
             res = Vector2.up;
-        } else if(collisionPoint.y == bottomBorderY) {
+        } else if(Mathf.Approximately(collisionPoint.y, bottomBorderY)) {
             res = Vector2.down;
         }
 

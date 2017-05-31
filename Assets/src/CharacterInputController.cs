@@ -5,6 +5,7 @@ using UnityEngine;
 public class CharacterInputController : MonoBehaviour {
     private bool wallJumpingEnabled = true;
     private bool airJumpsEnabled = true;
+    private bool enableSlowMotionForDebugging = false;
 
     private CharacterPhysicsController physics;
     private int airJumpsLeft = 0;
@@ -22,6 +23,10 @@ public class CharacterInputController : MonoBehaviour {
     // Use this for initialization
     void Start() {
         physics = GetComponent<CharacterPhysicsController>();
+
+        if(enableSlowMotionForDebugging) {
+            Time.timeScale = 0.3f;
+        }
     }
 
     /// <summary>
@@ -44,10 +49,16 @@ public class CharacterInputController : MonoBehaviour {
         if(!isInputLocked()) {
             float xInput = Input.GetAxisRaw("Horizontal");
 
-            if(collisionState == CollisionStates.GROUND) {
-                physics.setVelocityX(HORIZONTAL_GROUND_SPEED * xInput);
+            if(xInput != 0f) {
+                if(collisionState == CollisionStates.GROUND || collisionState == CollisionStates.WALL) {
+                    if((xInput < 0f && leftCollisionsClear()) || xInput > 0f && rightCollisionsClear()) {
+                        physics.setVelocityX(HORIZONTAL_GROUND_SPEED * xInput);
+                    }
+                } else if(collisionState == CollisionStates.AIR) {
+                    physics.setVelocityX(HORIZONTAL_AIR_SPEED * xInput);
+                }
             } else {
-                physics.setVelocityX(HORIZONTAL_AIR_SPEED * xInput);
+                physics.setVelocityX(0f);
             }
 
             bool jumpTrigger = Input.GetButtonDown("Jump");
@@ -67,6 +78,28 @@ public class CharacterInputController : MonoBehaviour {
                 }
             }
         }
+    }
+
+    private bool leftCollisionsClear() {
+        bool res = true;
+
+        RaycastHit2D leftHit = physics.cols.getRaycastHit(physics.cols.left, Vector2.left);
+        if(leftHit) {
+            res = false;
+        }
+
+        return res;
+    }
+
+    private bool rightCollisionsClear() {
+        bool res = true;
+
+        RaycastHit2D rightHit = physics.cols.getRaycastHit(physics.cols.right, Vector2.right);
+        if(rightHit) {
+            res = false;
+        }
+
+        return res;
     }
 
     /// <summary>
