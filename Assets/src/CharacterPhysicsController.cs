@@ -7,14 +7,14 @@ public class CharacterPhysicsController : MonoBehaviour {
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCollider;
-    private const float GRAVITY_ACCELERATION = -9.8f;
-    private const float WALL_SLIDE_ACCELERATION = -5f;
-    private const int RAYCASTS_PER_DIRECTION = 5;
-    private const float RAYCAST_LENGTH = 0.3f;
     private CollisionData cols;
     private int collisionState = CollisionStates.AIR;
     private int collisionLayer = 1 << 8;
 
+    private const float GRAVITY_ACCELERATION = -9.8f;
+    private const float WALL_SLIDE_ACCELERATION = -5f;
+    private const int RAYCASTS_PER_DIRECTION = 5;
+    private const float RAYCAST_LENGTH = 0.3f;
     private const float MAX_FALL_SPEED = -10f;
     private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
     private const float MAX_HORIZONTAL_SPEED_AIR = 15f;
