@@ -43,7 +43,7 @@ public class CollisionData {
     /// <param name="hit"></param>
     /// <param name="raycastDir"></param>
     /// <returns></returns>
-    private bool isCollision(RaycastHit2D hit, Vector2 raycastDir) {
+    public bool isCollision(RaycastHit2D hit, Vector2 raycastDir) {
         bool res = false;
         if(hit) {
             ColliderController cc = hit.collider.gameObject.GetComponent<ColliderController>();

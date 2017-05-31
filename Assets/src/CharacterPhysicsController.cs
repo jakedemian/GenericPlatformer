@@ -99,17 +99,6 @@ public class CharacterPhysicsController : MonoBehaviour {
             snapToRightWall();
         } else {
             collisionState = CollisionStates.AIR;
-
-            // we need to handle a case in which a character is falling and they hit a block corner to corner
-            if(getVelocityX() != 0 && getVelocityY() != 0) {
-                // we are moving diagonally
-                float xDir = getVelocityX() < 0 ? -1f : 1f;
-                float yDir = getVelocityY() < 0 ? -1f : 1f;
-                Vector2 dir = new Vector2(xDir, yDir);
-
-                Vector2 diagRaycastOrigin = new Vector2(transform.position.x + (dir.x / 2f), transform.position.y + (dir.y / 2f));
-                generateDiagonalRaycast(diagRaycastOrigin, dir);
-            }
         }
 
         // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
@@ -119,30 +108,6 @@ public class CharacterPhysicsController : MonoBehaviour {
             float collisionPointY = cols.getRaycastHit(cols.up, Vector2.up).point.y;
             float playerHeight = boxCollider.bounds.max.y - boxCollider.bounds.min.y;
             transform.position = new Vector2(transform.position.x, collisionPointY - (playerHeight / 2f));
-        }
-    }
-
-    /// <summary>
-    ///     Generate a diagonal raycast if the player is moving diagonally.
-    /// </summary>
-    /// <param name="origin">The origin of the raycast.</param>
-    /// <param name="dir"> The direction of the raycast.</param>
-    private void generateDiagonalRaycast(Vector2 origin, Vector2 dir) {
-        RaycastHit2D[] hHitsToCheck = dir.x < 0f ? cols.left : cols.right;
-        RaycastHit2D[] vHitsToCheck = dir.y < 0f ? cols.down : cols.up;
-
-        Vector2 hDirToCheck = dir.x < 0f ? Vector2.left : Vector2.right;
-        Vector2 vDirToCheck = dir.y < 0f ? Vector2.down : Vector2.up;
-
-        float magSpeed = Mathf.Sqrt(Mathf.Pow(getVelocityX(), 2) + Mathf.Pow(getVelocityY(), 2));
-        float raycastLengthFactor = magSpeed / 10f;
-        float raycastLen = MIN_RAYCAST_LENGTH / 2f;
-
-        RaycastHit2D diagHit = Physics2D.Raycast(origin, dir, Mathf.Sqrt(2f) * (raycastLen + (raycastLen * raycastLengthFactor)), collisionLayer);
-        Debug.DrawRay(origin, dir * Mathf.Sqrt(2f) * (raycastLen + (raycastLen * raycastLengthFactor)), Color.yellow);
-        if(diagHit && !cols.isCollisionAtDirection(hHitsToCheck, hDirToCheck) && !cols.isCollisionAtDirection(vHitsToCheck, vDirToCheck)){
-            // if we made it here, then the diagonal has detected a collision before any of the other raycasts.
-            setVelocityX(0f);
         }
     }
 
@@ -204,7 +169,8 @@ public class CharacterPhysicsController : MonoBehaviour {
             res[i] = Physics2D.Raycast(origin, dir, MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor), collisionLayer);
 
             if(showDebugRaycasts) {
-                Debug.DrawRay(origin, dir * (MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor)), Color.green);
+                Color raycastClr = res[i] && cols.isCollision(res[i], dir) ? Color.green : Color.black;
+                Debug.DrawRay(origin, dir * (MIN_RAYCAST_LENGTH + (MIN_RAYCAST_LENGTH * raycastLengthFactor)), raycastClr);
             }
         }
 
