@@ -86,15 +86,15 @@ public class CharacterPhysicsController : MonoBehaviour {
             transform.position = new Vector2(transform.position.x, collisionPointY + (playerHeight / 2f));
 
             // still need to provide wall snapping, just don't set the state to WALL since we're already grounded
-            if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() < 0f) {
+            if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
                 snapToLeftWall();
-            } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() > 0f) {
+            } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
                 snapToRightWall();
             }
-        } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() < 0f) {
+        } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
             collisionState = CollisionStates.WALL;
             snapToLeftWall();
-        } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() > 0f) {
+        } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
             collisionState = CollisionStates.WALL;
             snapToRightWall();
         } else {
@@ -102,7 +102,9 @@ public class CharacterPhysicsController : MonoBehaviour {
         }
 
         // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
-        if(allowUpwardCollisions && cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
+        RaycastHit2D upCollision = cols.getRaycastHit(cols.up, Vector2.up);
+        bool upColIsPlatform = upCollision && upCollision.collider.gameObject.GetComponent<ColliderController>().isPlatform();
+        if((allowUpwardCollisions || !upColIsPlatform) && cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
             setVelocityY(-0.5f * getVelocityY());
 
             float collisionPointY = cols.getRaycastHit(cols.up, Vector2.up).point.y;

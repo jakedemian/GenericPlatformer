@@ -20,6 +20,28 @@ public class ColliderController : MonoBehaviour {
         bottomBorderY = b.min.y;
     }
 
+    public bool isPlatform() {
+        bool res = false;
+
+        Bounds b = bc.bounds;
+        float width = b.max.x - b.min.x;
+        float height = b.max.y - b.min.y;
+        res = width >= height;
+
+        return res;
+    }
+
+    public bool isWall() {
+        bool res = false;
+
+        Bounds b = bc.bounds;
+        float width = b.max.x - b.min.x;
+        float height = b.max.y - b.min.y;
+        res = height >= width;
+
+        return res;
+    }
+
     public Vector2 getCollisionNormal(Vector2 collisionPoint) {
         Vector2 res = Vector2.zero;
 
