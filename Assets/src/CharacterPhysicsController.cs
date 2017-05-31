@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class CharacterPhysicsController : MonoBehaviour {
     public bool showDebugRaycasts = true;
+    private bool allowUpwardCollisions = false;
 
     [HideInInspector]
     public CollisionData cols;
@@ -112,8 +113,12 @@ public class CharacterPhysicsController : MonoBehaviour {
         }
 
         // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
-        if(cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
+        if(allowUpwardCollisions && cols.isCollisionAtDirection(cols.up, Vector2.up) && getVelocityY() > 0f && (collisionState == CollisionStates.AIR || collisionState == CollisionStates.WALL)) {
             setVelocityY(-0.5f * getVelocityY());
+
+            float collisionPointY = cols.getRaycastHit(cols.up, Vector2.up).point.y;
+            float playerHeight = boxCollider.bounds.max.y - boxCollider.bounds.min.y;
+            transform.position = new Vector2(transform.position.x, collisionPointY - (playerHeight / 2f));
         }
     }
 

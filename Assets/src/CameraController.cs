@@ -10,7 +10,7 @@ public class CameraController : MonoBehaviour {
     private Vector2 tgtPos;
     private Vector2 camPos;
     private const float CAM_ACCELERATION = 8f;
-    private const float VERT_OFFSET = 1f;
+    private const float VERT_OFFSET = 0f;
 
     private const float MAX_AXIS_DIFFERENCE_BETWEEN_CAM_AND_TARGET = 0.1f;
 
