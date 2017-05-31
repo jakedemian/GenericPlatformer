@@ -19,7 +19,7 @@ public class CharacterPhysicsController : MonoBehaviour {
     private const int RAYCASTS_PER_DIRECTION = 5;
     private const float MIN_RAYCAST_LENGTH = 0.2f;
     private const float MAX_FALL_SPEED = -10f;
-    private const float MAX_SLIDE_SPEED = -3f;
+    private const float MAX_SLIDE_SPEED = -6f;
     private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
     private const float MAX_HORIZONTAL_SPEED_AIR = 15f;
 
