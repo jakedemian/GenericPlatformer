@@ -14,13 +14,13 @@ public class CharacterPhysicsController : MonoBehaviour {
     private int collisionState = CollisionStates.AIR;
     private int collisionLayer = 1 << 8;
 
-    private const float GRAVITY_ACCELERATION = -12f;
-    private const float WALL_SLIDE_ACCELERATION_DOWN = -3f;
-    private const float WALL_SLIDE_DECELERATION_UP = -15f;
+    private const float GRAVITY_ACCELERATION = -18f;
+    private const float WALL_SLIDE_ACCELERATION_DOWN = -8f;
+    private const float WALL_SLIDE_DECELERATION_UP = -22f;
     private const int RAYCASTS_PER_DIRECTION = 5;
     private const float MIN_RAYCAST_LENGTH = 0.2f;
-    private const float MAX_FALL_SPEED = -10f;
-    private const float MAX_SLIDE_SPEED = -6f;
+    private const float MAX_FALL_SPEED = -20f;
+    private const float MAX_SLIDE_SPEED = -12f;
     private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
     private const float MAX_HORIZONTAL_SPEED_AIR = 15f;
 
