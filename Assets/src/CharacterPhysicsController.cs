@@ -7,12 +7,17 @@ public class CharacterPhysicsController : MonoBehaviour {
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCollider;
-    private const float GRAVITY_VELOCITY = -9.8f;
+    private const float GRAVITY_ACCELERATION = -9.8f;
+    private const float WALL_SLIDE_ACCELERATION = -5f;
     private const int RAYCASTS_PER_DIRECTION = 5;
     private const float RAYCAST_LENGTH = 0.3f;
     private CollisionData cols;
     private int collisionState = CollisionStates.AIR;
     private int collisionLayer = 1 << 8;
+
+    private const float MAX_FALL_SPEED = -10f;
+    private const float MAX_HORIZONTAL_SPEED_GROUND = 10f;
+    private const float MAX_HORIZONTAL_SPEED_AIR = 15f;
 
     /// <summary>
     ///     START
@@ -30,43 +35,56 @@ public class CharacterPhysicsController : MonoBehaviour {
         updateCollisionData();
 
         // apply gravity
-        if(collisionState != CollisionStates.GROUND) {
-            float newY = getVelocityY() + (GRAVITY_VELOCITY * Time.deltaTime);
+        if(collisionState == CollisionStates.AIR) {
+            float newY = getVelocityY() + (GRAVITY_ACCELERATION * Time.deltaTime);
             setVelocityY(newY);
+        } else if(collisionState == CollisionStates.WALL) {
+            float newY = getVelocityY() + (WALL_SLIDE_ACCELERATION * Time.deltaTime);
+            setVelocityY(newY);
+        }
+
+        // limit the player's fall speed
+        if(getVelocityY() < MAX_FALL_SPEED) {
+            setVelocityY(MAX_FALL_SPEED);
+        }
+
+        // limit the player's movement speed
+        if(collisionState == CollisionStates.GROUND && Mathf.Abs(getVelocityX()) > MAX_HORIZONTAL_SPEED_GROUND) {
+            var newVelX = getVelocityX() < 0 ? -MAX_HORIZONTAL_SPEED_GROUND : MAX_HORIZONTAL_SPEED_GROUND;
+            setVelocityX(newVelX);
+        } else if(collisionState == CollisionStates.AIR && Mathf.Abs(getVelocityX()) > MAX_HORIZONTAL_SPEED_AIR) {
+            var newVelX = getVelocityX() < 0 ? -MAX_HORIZONTAL_SPEED_AIR : MAX_HORIZONTAL_SPEED_AIR;
+            setVelocityX(newVelX);
         }
 	}
 
     /// <summary>
-    /// 
+    ///     Update the collision data for this frame and have the character react accordingly
     /// </summary>
     private void updateCollisionData() {
         updateCollisionRaycasts();
 
-        // process cols
         if(cols.isCollisionAtDirection(cols.down, Vector2.down) && getVelocityY() <= 0f) {
             // ground
             collisionState = CollisionStates.GROUND;
             setVelocityY(0f);
 
-            float collisionPointY = cols.getRaycastHit(cols.down).point.y;
+            float collisionPointY = cols.getRaycastHit(cols.down, Vector2.down).point.y;
             float playerHeight = boxCollider.bounds.max.y - boxCollider.bounds.min.y;
             transform.position = new Vector2(transform.position.x, collisionPointY + (playerHeight / 2f));
+
+            // still need to provide wall snapping, just don't set the state to WALL since we're already grounded
+            if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
+                snapToLeftWall();
+            } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
+                snapToRightWall();
+            }
         } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
-            // left wall
             collisionState = CollisionStates.WALL;
-            setVelocityX(0f);
-
-            float collisionPointX = cols.getRaycastHit(cols.left).point.x;
-            float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
-            transform.position = new Vector2(collisionPointX + (playerWidth / 2f), transform.position.y);
+            snapToLeftWall();
         } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
-            // right wall
             collisionState = CollisionStates.WALL;
-            setVelocityX(0f);
-
-            float collisionPointX = cols.getRaycastHit(cols.right).point.x;
-            float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
-            transform.position = new Vector2(collisionPointX - (playerWidth / 2f), transform.position.y);
+            snapToRightWall();
         } else {
             collisionState = CollisionStates.AIR;
         }
@@ -78,7 +96,29 @@ public class CharacterPhysicsController : MonoBehaviour {
     }
 
     /// <summary>
-    /// 
+    ///     Snap the box collider to the left-hand collision point.
+    /// </summary>
+    private void snapToLeftWall() {
+        setVelocityX(0f);
+
+        float collisionPointX = cols.getRaycastHit(cols.left, Vector2.left).point.x;
+        float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
+        transform.position = new Vector2(collisionPointX + (playerWidth / 2f), transform.position.y);
+    }
+
+    /// <summary>
+    ///     Snap the box collider to the right-hand collision point.
+    /// </summary>
+    private void snapToRightWall() {
+        setVelocityX(0f);
+
+        float collisionPointX = cols.getRaycastHit(cols.right, Vector2.right).point.x;
+        float playerWidth = boxCollider.bounds.max.x - boxCollider.bounds.min.x;
+        transform.position = new Vector2(collisionPointX - (playerWidth / 2f), transform.position.y);
+    }
+
+    /// <summary>
+    ///     Update the character's raycasts and store them for this frame
     /// </summary>
     /// <param name="b"></param>
     private void updateCollisionRaycasts() {
@@ -96,12 +136,12 @@ public class CharacterPhysicsController : MonoBehaviour {
     }
     
     /// <summary>
-    /// 
+    ///     Generate an array of raycast 2d hits between two points, projecting in a given direction.
     /// </summary>
-    /// <param name="origin1"></param>
-    /// <param name="origin2"></param>
-    /// <param name="dir"></param>
-    /// <returns></returns>
+    /// <param name="origin1">The first point</param>
+    /// <param name="origin2">The last point</param>
+    /// <param name="dir">The direction to shoot the raycasts</param>
+    /// <returns>An array of the RaycastHit2D objects.</returns>
     private RaycastHit2D[] generateRaycastsForDirection(Vector2 origin1, Vector2 origin2, Vector2 dir) {
         RaycastHit2D[] res = new RaycastHit2D[RAYCASTS_PER_DIRECTION];
 
@@ -143,7 +183,12 @@ public class CharacterPhysicsController : MonoBehaviour {
         return rb.velocity;
     }
 
-    private struct CollisionStates {
+    public int getPlayerCollisionState() {
+        return collisionState;
+    }
+
+    // TODO move out so that all classes have access??
+    public struct CollisionStates {
         public static int GROUND = 0;
         public static int WALL = 1;
         public static int AIR = 2;
