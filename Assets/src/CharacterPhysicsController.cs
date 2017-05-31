@@ -44,12 +44,21 @@ public class CharacterPhysicsController : MonoBehaviour {
 
         // process cols
         if(cols.isCollisionAtDirection(cols.down, Vector2.down) && getVelocityY() <= 0f) {
+            collisionState = CollisionStates.GROUND;
+            setVelocityY(0f);
+
             float collisionPointY = cols.getRaycastHit(cols.down).point.y;
             float playerHeight = boxCollider.bounds.max.y - boxCollider.bounds.min.y;
             transform.position = new Vector2(transform.position.x, collisionPointY + playerHeight / 2f);
-            collisionState = CollisionStates.GROUND;
-            setVelocityY(0f);
+        } else if(cols.isCollisionAtDirection(cols.left, Vector2.left) && getVelocityX() <= 0f) {
+            // on wall left (maybe combine with below)
+        } else if(cols.isCollisionAtDirection(cols.right, Vector2.right) && getVelocityX() >= 0f) {
+            // on wall right (maybe combine with above
+        } else {
+            // in air
         }
+
+        // separate, state independent case for hitting the ceiling.  if you hit the ceiling and you are moving up, reverse y direction.
     }
 
     /// <summary>
