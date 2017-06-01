@@ -38,7 +38,9 @@ public class CharacterInputController : MonoBehaviour {
         }
     }
 
-    // Update is called once per frame
+    /// <summary>
+    ///     UPDATE
+    /// </summary>
     void Update () {
         int collisionState = physics.getPlayerCollisionState();
 
@@ -80,6 +82,10 @@ public class CharacterInputController : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    ///     Determine if the left-hand side of the character is clear of collisions.
+    /// </summary>
+    /// <returns>True if clear, false if there is a collision</returns>
     private bool leftCollisionsClear() {
         bool res = true;
 
@@ -91,6 +97,10 @@ public class CharacterInputController : MonoBehaviour {
         return res;
     }
 
+    /// <summary>
+    ///     Determine if the right-hand side of the character is clear of collisions.
+    /// </summary>
+    /// <returns>True if clear, false if there is a collision.</returns>
     private bool rightCollisionsClear() {
         bool res = true;
 
